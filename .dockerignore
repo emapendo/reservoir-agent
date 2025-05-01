@@ -1,0 +1,35 @@
+# Ignore virtual environments
+.venv/
+venv/
+
+# Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment files
+.env
+*.env
+
+# OS and IDE files
+.DS_Store
+.idea/
+.vscode/
+
+# Git metadata (you usually want this ignored in containers)
+.git
+.gitignore
+
+# Jupyter notebooks, if any
+*.ipynb
+
+# Temporary files
+*.log
+*.tmp
+*.bak
+*~
+
+# System-specific
+Thumbs.db
+ehthumbs.db
