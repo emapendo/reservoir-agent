@@ -5,7 +5,8 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # Copy project files
-COPY run_reservoir.py .
+COPY regression.py .
+COPY classification.py .
 COPY templates/ ./templates
 
 # Install dependencies
