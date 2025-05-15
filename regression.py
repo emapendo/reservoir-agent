@@ -1,10 +1,7 @@
-from flask import Flask, request, jsonify, render_template
 import numpy as np
 from reservoirpy.nodes import Reservoir, Ridge
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
-
-app = Flask(__name__)
 
 # Build the ESN
 reservoir = Reservoir(units=500, sr=0.9, lr=0.3)
