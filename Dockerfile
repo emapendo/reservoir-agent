@@ -17,4 +17,4 @@ RUN pip install --no-cache-dir reservoirpy numpy matplotlib scikit-learn flask
 EXPOSE 5000
 
 # Run Flask app
-CMD ["python", "run_reservoir.py"]
+CMD ["python", "server.py"]
