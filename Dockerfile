@@ -8,6 +8,7 @@ WORKDIR /app
 COPY regression.py .
 COPY classification.py .
 COPY templates/ ./templates
+COPY static/ ./static
 
 # Install dependencies
 RUN pip install --upgrade pip
