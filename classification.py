@@ -1,10 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from reservoirpy.nodes import Reservoir, Ridge
+from reservoirpy.nodes import Reservoir
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import classification_report
-from random import seed
 
 # --- 1. Signal Generators ---
 def generate_signal(label: int, length: int = 30):
@@ -22,49 +21,50 @@ def generate_signal(label: int, length: int = 30):
     else:
         raise ValueError("Invalid label.")
 
-def create_balanced_classification_dataset(n_samples_per_class=100, sequence_length=30):
-    X = []
-    y = []
+def create_sequence_dataset(n_samples_per_class=200, sequence_length=30):
+    sequences = []
+    labels = []
 
     for label in range(4):
         for _ in range(n_samples_per_class):
             pattern = generate_signal(label, sequence_length)
-            X.append(pattern)
-            y.extend([label] * sequence_length)  # one label per time step
+            sequences.append(pattern)
+            labels.append(label)
 
-    X = np.vstack(X)  # shape: (num_samples * seq_len, 1)
-    y = np.array(y)   # shape: (num_samples * seq_len,)
-    return X, y
+    return np.array(sequences), np.array(labels)
 
 # --- 2. Data Prep ---
 
-X, y = create_balanced_classification_dataset()
+X_seq, y = create_sequence_dataset()
 
-# One-hot encode the labels
-encoder = OneHotEncoder(sparse_output=False)
-y_oh = encoder.fit_transform(y.reshape(-1, 1))
+X_train, X_test, y_train, y_test = train_test_split(X_seq, y, test_size=0.3, shuffle=True)
 
-# Train-test split
-X_train, X_test, y_train, y_test = train_test_split(X, y_oh, test_size=0.3, shuffle=True)
+# --- 3. Build Reservoir and Extract Final States ---
 
-# --- 3. Train ESN Classifier ---
+reservoir = Reservoir(units=500, sr=0.95, lr=0.5)
 
-reservoir = Reservoir(units=300, sr=0.9, lr=0.3)
-readout = Ridge(ridge=1e-4)
-esn = reservoir >> readout
+def get_final_states(X_seq):
+    states = []
+    for seq in X_seq:
+        state_seq = reservoir.run(seq)  # shape: (sequence_length, reservoir_units)
+        final_state = state_seq[-1]     # take last timestep
+        states.append(final_state)
+    return np.array(states)
 
-esn = esn.fit(X_train, y_train, warmup=10, reset=True)
+X_train_states = get_final_states(X_train)
+X_test_states = get_final_states(X_test)
 
-# --- 4. Predict ---
+# --- 4. Train Logistic Regression Readout ---
 
-y_pred_oh = esn.run(X_test)
-y_pred = np.argmax(y_pred_oh, axis=1)
-y_true = np.argmax(y_test, axis=1)
+clf = LogisticRegression(max_iter=1000, solver="lbfgs", multi_class="multinomial")
+clf.fit(X_train_states, y_train)
 
-# --- 5. Evaluate ---
+# --- 5. Predict & Evaluate ---
+
+y_pred = clf.predict(X_test_states)
 
 print(classification_report(
-    y_true,
+    y_test,
     y_pred,
     labels=[0, 1, 2, 3],
     target_names=["Random Walk", "Sine Wave", "Trend Line", "Flat Noise"],
@@ -74,13 +74,21 @@ print(classification_report(
 # --- 6. Plot ---
 
 plt.figure(figsize=(10, 5))
-plt.plot(y_true[:300], label="True", linestyle="--")
-plt.plot(y_pred[:300], label="Predicted", linestyle=":")
-plt.title("RC Classification Output")
-plt.xlabel("Timestep")
+plt.plot(y_test[:50], label="True", linestyle="--")
+plt.plot(y_pred[:50], label="Predicted", linestyle=":")
+mismatch = y_test[:50] != y_pred[:50]
+plt.scatter(np.where(mismatch), y_test[:50][mismatch], color="red", label="Misclassified", marker='x')
+plt.title("RC + Logistic Regression Classification")
+plt.xlabel("Sequence Index")
 plt.ylabel("Class Label")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
-plt.savefig("rc_classification_output.png")
+plt.savefig("rc_logistic_classification_output.png")
+plt.show()
+
+from sklearn.metrics import ConfusionMatrixDisplay
+ConfusionMatrixDisplay.from_predictions(y_test, y_pred)
+plt.title("Confusion Matrix")
+plt.savefig("rc_logistic_confusion_matrix.png")
 plt.show()
