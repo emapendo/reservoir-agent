@@ -1,0 +1,28 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    padding: 2rem;
+}
+h1 {
+    text-align: center;
+}
+.container {
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+input, textarea, button {
+    width: 100%;
+    margin: 1rem 0;
+    padding: 0.5rem;
+    font-size: 1rem;
+}
+.output {
+    background: #eef;
+    padding: 1rem;
+    border-radius: 5px;
+    white-space: pre-wrap;
+}

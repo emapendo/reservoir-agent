@@ -1,28 +1,58 @@
-<!doctype html>
-    <html lang="en">
-      <head>
-        <title>Reservoir Server</title>
-        <style>
-          body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-size: 24px;
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            margin: 0;
-          }
-          div {
-            text-align: center;
-          }
-        </style>
-      </head>
-      <body>
-        <div>
-          <p>✅ Server is up!</p>
-          <p>➔ Send POST to <code>/predict and /classify</code></p>
-          <p>➔ Use curl or Postman to post new data.</p>
-        </div>
-      </body>
-    </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Live RC Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='homepage.css') }}">
+</head>
+<body>
+    <h1>Live Reservoir Agent Dashboard</h1>
+    <div class="container">
+        <label for="input">Enter Input Values (comma-separated for /predict):</label>
+        <textarea id="input" placeholder="0.1, 0.2, 0.3"></textarea>
+        <button onclick="sendPredict()">Submit to /predict</button>
+
+        <label for="sequence">Enter Sequence (30 values for /classify):</label>
+        <textarea id="sequence" placeholder="0.01, 0.05, 0.1, ..."></textarea>
+        <button onclick="sendClassify()">Submit to /classify</button>
+
+        <div class="output" id="output"></div>
+    </div>
+
+    <script>
+        async function sendPredict() {
+            const input = document.getElementById("input").value
+                .split(',')
+                .map(Number);
+
+            const response = await fetch("/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ input })
+            });
+
+            const result = await response.json();
+            document.getElementById("output").textContent =
+                "Predictions: " + JSON.stringify(result.predictions, null, 2) +
+                "\nDecisions: " + JSON.stringify(result.decisions, null, 2);
+        }
+
+        async function sendClassify() {
+            const sequence = document.getElementById("sequence").value
+                .split(',')
+                .map(Number);
+
+            const response = await fetch("/classify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ sequence })
+            });
+
+            const result = await response.json();
+            document.getElementById("output").textContent =
+                "Class: " + result.class +
+                "\nLabel: " + result.label;
+        }
+    </script>
+</body>
+</html>
